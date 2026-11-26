@@ -1,25 +1,29 @@
-module riscv(
+module data_path(
   input logic clk
 );
-  logic [31:0] pc_next, pc, instr, rs1_value, alu_result, read_data;
+  logic [31:0] pc_next, pc, instr, rs1_value, alu_result, read_data, write_data;
   logic [31:0] imm_ext;
 
   logic reg_file_WE = 1;
   logic data_mem_WE = 0;
+  logic imm_src = 0;
 
   program_counter prog_counter ( .pc_next(pc_next), .pc(pc), .clk(clk) );
   ins_mem ins_mem ( .A(pc), .RD(instr) );
   reg_file reg_file (
     .A1(instr[19:15]),
+    .A2(instr[24:20]),
     .A3(instr[11:7]),
     .clk(clk),
     .WE3(reg_file_WE),
     .RD1(rs1_value),
+    .RD2(write_data),
     .WD3(read_data)
   );
 
   extend ext (
-    .imm(instr[31:20]),
+    .imm(instr[31:7]),
+    .imm_src(imm_src),
     .imm_ext(imm_ext)
   );
 
@@ -40,7 +44,7 @@ module riscv(
     .clk(clk),
     .WE(data_mem_WE),
     .A(alu_result),
-    .WD(),
+    .WD(write_data),
     .RD(read_data)
   );
 

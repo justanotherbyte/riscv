@@ -1,23 +1,27 @@
-import random
-
 import cocotb
 from cocotb.triggers import Timer
 from sim import run
 
 
+def bits(instr: int, msb: int, lsb: int) -> int:
+    return (instr >> lsb) & ((1 << (msb - lsb + 1)) - 1)
+
+
 @cocotb.test
 async def test_extend_(dut):
-    dut.imm.value = 1
+    instr = 0x0064A423
+
+    dut.imm.value = bits(instr, 31, 7)
+    dut.imm_src.value = 1
     await Timer(1, unit="ns")
 
-    assert dut.imm_ext.value == 1
+    assert dut.imm_ext.value == (bits(instr, 31, 25) << 5) | bits(instr, 11, 7)
 
-    num = -random.randint(1, 250)
-
-    dut.imm.value = num
+    dut.imm.value = bits(instr, 31, 7)
+    dut.imm_src.value = 0
     await Timer(1, unit="ns")
 
-    assert dut.imm_ext.value == num
+    assert dut.imm_ext.value == bits(instr, 31, 20)
 
 
 def test_extend():

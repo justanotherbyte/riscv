@@ -7,7 +7,9 @@ from cocotb_tools.runner import get_runner
 SRC = Path(__file__).resolve().parent.parent / "src"
 
 
-def run(toplevel: str, sources: list[str], test_module: str, testcase: str | None = None) -> None:
+def run(
+    toplevel: str, sources: list[str], test_module: str, testcase: str | None = None
+) -> None:
     """Build `sources` (relative to src/) with Verilator and run the cocotb tests in `test_module`.
 
     With `testcase`, run only that test in a fresh simulator so no state leaks in from other tests.
@@ -18,11 +20,15 @@ def run(toplevel: str, sources: list[str], test_module: str, testcase: str | Non
         sources=[SRC / s for s in sources],
         hdl_toplevel=toplevel,
         build_dir=build_dir,
-        always=False,  # rebuild only when sources change, so per-test runs reuse one build
+        always=True,  # rebuild only when sources change, so per-test runs reuse one build
         waves=True,
-        build_args=["-Wno-PINMISSING",],
+        build_args=[
+            "-Wno-PINMISSING",
+        ],
     )
-    test_dir = build_dir / testcase if testcase else build_dir  # sim cwd: dump.vcd and results land here
+    test_dir = (
+        build_dir / testcase if testcase else build_dir
+    )  # sim cwd: dump.vcd and results land here
     results = test_dir / "results.xml"
     try:
         runner.test(
@@ -47,4 +53,6 @@ def run(toplevel: str, sources: list[str], test_module: str, testcase: str | Non
             raise
     else:
         return
-    pytest.fail("\n\n".join(failures), pytrace=False)  # outside `except` so pytest doesn't print the SystemExit chain
+    pytest.fail(
+        "\n\n".join(failures), pytrace=False
+    )  # outside `except` so pytest doesn't print the SystemExit chain
