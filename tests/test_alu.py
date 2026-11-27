@@ -18,6 +18,26 @@ async def test_alu_addition(dut):
 
     assert dut.result.value == src_a + src_b
 
+    dut.ctrl.value = 0b001
+    await Timer(1, unit="ns")
+
+    assert dut.result.value == src_a - src_b
+
+    dut.ctrl.value = 0b010
+    await Timer(1, unit="ns")
+
+    assert dut.result.value == src_a & src_b
+
+    dut.ctrl.value = 0b011
+    await Timer(1, unit="ns")
+
+    assert dut.result.value == src_a | src_b
+
+    dut.ctrl.value = 0b101
+    await Timer(1, unit="ns")
+
+    assert dut.result.value == int(src_a < src_b)
+
 
 def test_alu():
     run("alu", ["alu.sv"], "test_alu")

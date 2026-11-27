@@ -1,15 +1,21 @@
 module data_path(
   input logic clk
 );
-  logic [31:0] pc_next, pc, instr, rs1_value, alu_result, read_data, write_data;
+  logic [31:0] pc_next, pc, instr, rs1_value, alu_result, read_data, write_data, result, src_b;
   logic [31:0] imm_ext;
 
   logic reg_file_WE = 1;
   logic data_mem_WE = 0;
   logic imm_src = 0;
+  logic result_src = 1;
+  logic alu_src = 1;
+  logic [2:0] alu_ctrl = 3'b000;
 
   program_counter prog_counter ( .pc_next(pc_next), .pc(pc), .clk(clk) );
   ins_mem ins_mem ( .A(pc), .RD(instr) );
+
+  assign result = result_src ? read_data : alu_result;
+
   reg_file reg_file (
     .A1(instr[19:15]),
     .A2(instr[24:20]),
@@ -18,7 +24,7 @@ module data_path(
     .WE3(reg_file_WE),
     .RD1(rs1_value),
     .RD2(write_data),
-    .WD3(read_data)
+    .WD3(result)
   );
 
   extend ext (
@@ -27,10 +33,12 @@ module data_path(
     .imm_ext(imm_ext)
   );
 
+  assign src_b = alu_src ? imm_ext : write_data;
+
   alu alu (
     .src_a(rs1_value),
-    .src_b(imm_ext),
-    .ctrl(0),
+    .src_b(src_b),
+    .ctrl(alu_ctrl),
     .result(alu_result)
   );
 
