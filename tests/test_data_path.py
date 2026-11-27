@@ -19,7 +19,10 @@ async def write_to_data_mem(dut, addr: int, value: int):
 PROGRAM = [
     0xFFC4A303,  # lw x6 -4(x9) (0x1000)
     0x0064A423,  # sw x6, 8(x9) (0x1004)
-    0x0062E233,  # or x4, x5, x6 (0x1008)
+    0x0062E233,  # or x4, x5, x6 (0x1008),
+    0x00000463,  # beq x0, x0 +8 (0x100C),
+    0x02A00213,  # addi x4, x0, 42
+    0x00300113,  # addi x2, x0, 3
 ]
 
 
@@ -53,7 +56,7 @@ async def test_instruction_flow(dut):
 
     dut.reg_file_WE.value = 0  # the sw instruction does not write to the register file.
     dut.data_mem_WE.value = 1  # the sw instruction writes to data memory.
-    dut.imm_src.value = 1  # s-type immediate
+    dut.imm_src.value = 0b01  # s-type immediate
 
     await RisingEdge(dut.clk)
     await Timer(1, unit="ns")
@@ -72,6 +75,31 @@ async def test_instruction_flow(dut):
     await Timer(1, unit="ns")
 
     assert dut.reg_file.mem[0x4].value == 0xCAFEBABE | 0xDEADBEEF
+
+    dut.pc_src.value = 1
+    dut.imm_src.value = 0b10
+    dut.data_mem_WE.value = 0
+    dut.reg_file_WE.value = 1
+    dut.alu_ctrl.value = 0b001
+
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+
+    assert dut.reg_file.mem[0x4].value != 42
+    assert dut.reg_file.mem[0x4].value == 0xCAFEBABE | 0xDEADBEEF
+
+    dut.reg_file_WE.value = 1
+    dut.data_mem_WE.value = 0
+    dut.pc_src.value = 0
+    dut.alu_src.value = 1
+    dut.alu_ctrl.value = 0b000
+    dut.imm_src.value = 0b00
+
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+
+    assert dut.reg_file.mem[0x2].value == 3
+    assert dut.alu.zero.value == 1
 
 
 @pytest.mark.parametrize("testcase", ["test_instruction_flow"])

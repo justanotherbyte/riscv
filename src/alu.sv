@@ -2,7 +2,8 @@ module alu (
   input logic [31:0] src_a,
   input logic [31:0] src_b,
   input logic [2:0] ctrl,
-  output logic [31:0] result
+  output logic [31:0] result,
+  output logic zero
 );
 
   logic [31:0] diff;
@@ -19,5 +20,6 @@ module alu (
     endcase
   end
 
+  assign zero = (result == 32'b0) ? 1 : 0;
 
 endmodule
